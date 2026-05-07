@@ -267,6 +267,6 @@ Includes code from the following projects:
 
 ### License
 
-&copy; 2024 Maddison Hellstrom, [MIT License](https://mit-license.org).
+&copy; 2024 Maddison Cohodas, [MIT License](https://mit-license.org).
 
 Blender is a registered trademark (®) of the Blender Foundation in EU and USA. This project is not affiliated with or endorsed by the Blender Foundation.
