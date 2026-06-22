@@ -85,11 +85,11 @@ local function create_cursormoved_tail_autocmd()
       if lnum == linecount then
         -- TODO remove after https://github.com/folke/neodev.nvim/pull/163 lands
         ---@diagnostic disable-next-line: inject-field
-        vim.w.overseer_pause_tail_for_buf = nil
+        vim.w.blender_pause_tail_for_buf = nil
       else
         -- TODO remove after https://github.com/folke/neodev.nvim/pull/163 lands
         ---@diagnostic disable-next-line: inject-field
-        vim.w.overseer_pause_tail_for_buf = args.buf
+        vim.w.blender_pause_tail_for_buf = args.buf
       end
     end,
   })
@@ -136,7 +136,7 @@ M.terminal_tail_hack = function(bufnr)
   local current_win = vim.api.nvim_get_current_win()
   for _, winid in ipairs(winids) do
     local scroll_to_line
-    if winid ~= current_win and vim.w[winid].overseer_pause_tail_for_buf ~= bufnr then
+    if winid ~= current_win and vim.w[winid].blender_pause_tail_for_buf ~= bufnr then
       local lnum = vim.api.nvim_win_get_cursor(winid)[1]
       local cursor_at_top = lnum < editor_height
       local not_much_output = linecount < editor_height + overflow
