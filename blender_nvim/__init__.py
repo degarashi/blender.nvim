@@ -53,4 +53,4 @@ def startup(
         from .dap import NvimDap
 
         dap = NvimDap.initialize(rpc)
-        dap.start()
+        dap.start(task_id)

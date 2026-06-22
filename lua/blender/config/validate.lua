@@ -212,7 +212,7 @@ M.number.whole = M.all { M.number._int, M.number._ge(0) }
 M.number.natural = M.all { M.number._int, M.number._ge(1) }
 
 -- percentages are numbers between 0 and 1, inclusive
-M.number.percentage = M.number._between_r_inc(0, 1)
+M.number.percentage = M.number._between_inc(0, 1)
 
 M.list = wrapped(vim.islist)
 

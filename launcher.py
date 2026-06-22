@@ -61,7 +61,9 @@ rpc_socket = os.environ.get("BLENDER_NVIM_RPC_SOCKET")
 addons_to_load = json.loads(os.environ.get("BLENDER_NVIM_ADDONS_TO_LOAD", "[]"))
 enable_debugpy = os.environ.get("BLENDER_NVIM_ENABLE_DAP", "no")
 task_id = os.environ.get("BLENDER_NVIM_TASK_ID", "0")
-virtual_env = os.environ.get("VIRTUAL_ENV")
+virtual_env = os.environ.get("VIRTUAL_ENV") or (
+    str(Path.cwd() / ".venv") if (Path.cwd() / ".venv").exists() else None
+)
 
 if virtual_env is not None:
     append_venv_path(virtual_env)
@@ -83,7 +85,11 @@ if rpc_socket is not None:
 
     addons_to_load = tuple(
         map(
-            lambda x: (Path(x["load_dir"]), cast(str, x["module_name"])),
+            lambda x: (
+                Path(x["load_dir"]),
+                cast(str, x["module_name"]),
+                cast(str, x.get("addon_type", "legacy")),
+            ),
             addons_to_load,
         )
     )

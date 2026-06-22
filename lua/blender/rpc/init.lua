@@ -96,17 +96,17 @@ end
 ---@field type 'setup_debugpy'
 ---@field host string
 ---@field port number
+---@field task_id number
 
 ---@param params RpcSetupDebugpyParams
 M.handlers.setup_debugpy = function(params)
   vim.validate {
     host = { params.host, 'string' },
     port = { params.port, 'number' },
+    task_id = { params.task_id, 'number' },
   }
   local running_task = manager.get_running_task()
-  --TODO: Add task_id to the message
-  -- if running_task and running_task.id == task_id then
-  if running_task then
+  if running_task and running_task.id == params.task_id then
     running_task:attach_debugger {
       host = params.host,
       port = params.port,

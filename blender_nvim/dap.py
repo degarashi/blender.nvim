@@ -41,7 +41,7 @@ class NvimDap:
     def __init__(self, rpc: NvimRpc):
         self.rpc = rpc
 
-    def start(self):
+    def start(self, task_id: int = 0):
         import debugpy
 
         debugpy.configure()
@@ -52,6 +52,7 @@ class NvimDap:
                 "type": "setup_debugpy",
                 "host": self.host,
                 "port": self.port,
+                "task_id": task_id,
             }
         )
 
