@@ -41,6 +41,16 @@ class NvimRpc:
         return cls._instance
 
     @classmethod
+    def shutdown(cls):
+        """Shut down the RPC instance, allowing re-initialization."""
+        instance = cls._instance
+        if instance is not None:
+            if instance._executor_started:
+                instance._executor_started = False
+            instance._session_thread = None
+            cls._instance = None
+
+    @classmethod
     def _register_handler(
         cls,
         kind: Literal["request", "notification"],
@@ -50,9 +60,30 @@ class NvimRpc:
     ):
         def wrapper(self, args):
             if main_thread:
-                self.schedule(lambda: handler(*args))
+                if kind == "request":
+                    # For requests, block until the handler completes on the
+                    # main thread so we can return its result to Neovim.
+                    result: List[Any] = [None]
+                    error: List[Optional[Exception]] = [None]
+                    event = threading.Event()
+
+                    def run():
+                        try:
+                            result[0] = handler(*args)
+                        except Exception as e:
+                            error[0] = e
+                        finally:
+                            event.set()
+
+                    self.schedule(run)
+                    event.wait()
+                    if error[0] is not None:
+                        raise error[0]
+                    return result[0]
+                else:
+                    self.schedule(lambda: handler(*args))
             else:
-                handler(*args)
+                return handler(*args)
 
         registry = (
             cls._request_handlers if kind == "request" else cls._notification_handlers
@@ -105,7 +136,7 @@ class NvimRpc:
         if name not in self._request_handlers:
             print("No handler for request:", name)
             return
-        self._request_handlers[name](self, args)
+        return self._request_handlers[name](self, args)
 
     def _on_notification(self, name: str, args: list):
         print("RPC notification:", name, args)
@@ -143,7 +174,7 @@ class NvimRpc:
                 func = self._execution_queue.get()
                 try:
                     func()
-                except:  # noqa: E722
+                except Exception:
                     traceback.print_exc()
             return 0.1
 

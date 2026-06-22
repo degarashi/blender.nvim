@@ -40,7 +40,7 @@ function RpcClient:reload_addon()
     names = vim
       .iter(self.path_mappings)
       :map(function(mapping)
-        return vim.fn.fnamemodify(mapping.load, ':t')
+        return mapping.blender_module or vim.fn.fnamemodify(mapping.load, ':t')
       end)
       :totable(),
   })

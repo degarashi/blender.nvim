@@ -1,3 +1,4 @@
+import threading
 from typing import Optional
 
 from .rpc import NvimRpc
@@ -26,6 +27,11 @@ class NvimDap:
     def get_instance_safe(cls):
         return cls._instance
 
+    @classmethod
+    def shutdown(cls):
+        """Shut down the DAP instance, allowing re-initialization."""
+        cls._instance = None
+
     # --- Instance --- #
     rpc: NvimRpc
     started: bool = False
@@ -48,6 +54,12 @@ class NvimDap:
                 "port": self.port,
             }
         )
-        print("Waiting for debug client.")
-        debugpy.wait_for_client()
-        print("Debug client attached.")
+
+        def _wait_for_client():
+            print("Waiting for debug client.")
+            debugpy.wait_for_client()
+            print("Debug client attached.")
+            self.started = True
+
+        thread = threading.Thread(target=_wait_for_client, daemon=True)
+        thread.start()

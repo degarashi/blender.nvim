@@ -9,12 +9,12 @@ from .utils import ensure_installed, fatal
 
 def ensure_compat():
     if version < (2, 80, 34):
-        return fatal("Unspported Blender version. Please use 2.80.34 or newer.")
+        return fatal("Unsupported Blender version. Please use 2.80.34 or newer.")
 
 
 def startup(
     rpc_socket: str,
-    addons_to_load: Tuple[Tuple[Path, str], ...],
+    addons_to_load: Tuple[Tuple[Path, str, str], ...],
     enable_dap: bool,
     task_id: int,
 ):
@@ -42,7 +42,7 @@ def startup(
     rpc = NvimRpc.initialize(rpc_socket, on_setup=on_setup)
     rpc.start()
 
-    load_addons(addons_to_load)
+    load_addons(addons_to_load, path_mappings)
 
     from . import operators, ui
 

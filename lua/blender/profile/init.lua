@@ -109,30 +109,57 @@ local function is_addon_init(path)
     return false
   end
   local content = vim.fn.readfile(path)
-  return vim.tbl_filter(function(line)
+  return #vim.tbl_filter(function(line)
     return line:find 'bl_info' ~= nil
-  end, content)
+  end, content) > 0
+end
+
+local function is_extension_dir(dir)
+  return vim.fn.filereadable(fix_path_separators(dir) .. '/blender_manifest.toml') == 1
+end
+
+local function read_manifest_id(dir)
+  local manifest_path = fix_path_separators(dir) .. '/blender_manifest.toml'
+  if vim.fn.filereadable(manifest_path) == 0 then
+    return nil
+  end
+  local content = vim.fn.readfile(manifest_path)
+  for _, line in ipairs(content) do
+    local id = line:match '^%s*id%s*=%s*"([^"]+)"'
+    if id then
+      return id
+    end
+  end
+  return nil
 end
 
 function Profile:find_addon_dir()
   --TODO: Make add-on detection more configurable
   local cwd = vim.fn.getcwd()
-  local addon_dir = cwd
+  -- Check for extension format (blender_manifest.toml) first
+  if is_extension_dir(cwd) then
+    return cwd
+  end
+  -- Check for legacy format (bl_info in __init__.py)
   if is_addon_init(vim.fn.fnamemodify(cwd, ':p') .. '/__init__.py') then
     return cwd
   end
+  -- Check subdirectories
   for _, dir in ipairs(vim.fn.globpath(cwd, '*', true, true)) do
+    if is_extension_dir(dir) then
+      return dir
+    end
     if is_addon_init(dir .. '/__init__.py') then
-      addon_dir = dir
-      break
+      return dir
     end
   end
-  return addon_dir
+  return cwd
 end
 
 ---@class PathMapping
 ---@field load_dir string
 ---@field module_name string
+---@field addon_type 'legacy'|'extension'
 
 ---@return {addon_dir: string, path_mappings: PathMapping[]}
 function Profile:get_paths()
@@ -141,13 +168,30 @@ function Profile:get_paths()
     notify('Could not find addon directory', 'WARN')
     return {}
   end
-  local module_name = vim.fn.fnamemodify(addon_dir, ':t')
+
+  local is_ext = is_extension_dir(addon_dir)
+  local module_name
+  local addon_type
+
+  if is_ext then
+    addon_type = 'extension'
+    module_name = read_manifest_id(addon_dir)
+    if not module_name then
+      notify('Could not read id from blender_manifest.toml, falling back to directory name', 'WARN')
+      module_name = vim.fn.fnamemodify(addon_dir, ':t')
+    end
+  else
+    addon_type = 'legacy'
+    module_name = vim.fn.fnamemodify(addon_dir, ':t')
+  end
+
   return {
     addon_dir = addon_dir,
     path_mappings = {
       {
         load_dir = addon_dir,
         module_name = module_name,
+        addon_type = addon_type,
       },
     },
   }
